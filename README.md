@@ -12,8 +12,10 @@ App web personal para practicar inglés de cara a entrevistas de trabajo y al ex
 
 ## Cómo funciona
 - Es un solo archivo `index.html`, sin build ni dependencias. Las fuentes vienen de Google Fonts.
-- La IA es Gemini `gemini-2.5-flash` y se llama directamente desde el navegador. La **clave de Gemini NO está en el código**: cada usuario la pega en Ajustes y se guarda en el `localStorage` de su dispositivo. Clave gratis en https://aistudio.google.com/apikey
-- Todo el progreso vive en el `localStorage` del dispositivo, no hay servidor.
+- La IA es Gemini `gemini-2.5-flash`. La app llama a un **Worker de Cloudflare** (`worker/`, en https://english-coach-api.guillenbruna97.workers.dev) que guarda la clave de Gemini como secreto. La clave nunca está en el código ni en el navegador. El Worker solo acepta peticiones desde `guillenbruna97.github.io` (y `localhost:8000` para pruebas) y solo hacia ese modelo.
+- En Ajustes se puede pegar una clave propia (opcional). Si hay una, la app llama a Google directamente y no pasa por el Worker.
+- Cambiar la clave del Worker: `cd worker && npx wrangler secret put GEMINI_KEY`. Volver a publicarlo: `cd worker && npx wrangler deploy`. Clave gratis en https://aistudio.google.com/apikey (mejor en un proyecto sin facturación, para que nunca cobre).
+- Todo el progreso vive en el `localStorage` del dispositivo. El Worker no guarda nada.
 
 ## Cómo seguir trabajando en ella (desde cualquier ordenador)
 1. `git clone https://github.com/guillenbruna97/english-coach.git`
@@ -25,5 +27,6 @@ Para probar en local, abre `index.html` en Chrome. El micro pide permiso la prim
 ## Historial de decisiones
 - Examen elegido: Aptis General, porque es barato, da el resultado en unas 48–72 h y tiene un formato sencillo.
 - Gemini en vez de Claude porque tiene capa gratuita (restricción de 0 €).
+- Worker de Cloudflare para no tener que pegar la clave en cada dispositivo sin publicarla en este repo, que es público (22/10/2026).
 - Antes existía una versión sin voz como artifact de Claude (claude.ai/artifact/VpiAo2qXFuWd7xYN5B2UE1). Esta app la sustituye.
 - Pendiente de iterar: probarla en el móvil y ajustar la voz y los tiempos de escucha.

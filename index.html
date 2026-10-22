@@ -117,10 +117,6 @@ a{color:var(--accent)}
     <div class="hright"><span class="streak"><b id="streakN">0</b> días</span><button class="icon" id="openSettings" type="button">Ajustes</button></div>
   </header>
 
-  <div class="card" id="keyBanner" hidden style="margin-top:14px">
-    <p class="warn" style="margin:0">La IA no está conectada todavía. Abre Ajustes y pega una clave de Gemini.</p>
-    <div class="btnrow"><button class="btn ghost" id="bannerOpen" type="button">Abrir Ajustes</button></div>
-  </div>
 
   <!-- AJUSTES -->
   <div class="card" id="setup" hidden style="margin-top:14px">
@@ -266,21 +262,18 @@ const today = () => dayKey(new Date());
 function scrollEndOf(el){ try{ el.lastElementChild?.scrollIntoView({block:"end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); }catch{} }
 
 /* ================= Ajustes ================= */
-// Clave de la app, limitada en Google Cloud a guillenbruna97.github.io y a la API de Gemini. Va troceada para que no la detecten los escáneres de secretos.
-const BUILT_IN = [].join("");
+// Sin clave propia, la app llama al Worker de Cloudflare (worker/), que guarda la clave de Gemini como secreto.
+const PROXY = "https://english-coach-api.guillenbruna97.workers.dev";
 let OWN_KEY = ls.get("gemini-key","");
-let KEY = OWN_KEY || BUILT_IN;
 const MODEL = "gemini-2.5-flash";
-function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = OWN_KEY; $("rateSel").value = String(ls.get("rate",0.95)); $("keyBanner").hidden = true; window.scrollTo(0,0); } }
+function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = OWN_KEY; $("rateSel").value = String(ls.get("rate",0.95)); window.scrollTo(0,0); } }
 $("openSettings").onclick = () => showSetup($("setup").hidden);
 $("closeSettings").onclick = () => showSetup(false);
-$("bannerOpen").onclick = () => showSetup(true);
 $("saveKey").onclick = () => {
-  OWN_KEY = $("keyIn").value.trim(); ls.set("gemini-key", OWN_KEY); KEY = OWN_KEY || BUILT_IN;
+  OWN_KEY = $("keyIn").value.trim(); ls.set("gemini-key", OWN_KEY);
   ls.set("voice", $("voiceSel").value); ls.set("rate", Number($("rateSel").value)); pickVoice();
   $("setupMsg").textContent = ""; showSetup(false);
 };
-function needKey(){ if (KEY) return false; $("keyBanner").hidden = false; $("keyBanner").scrollIntoView({block:"nearest"}); return true; }
 
 /* ================= Voz de salida ================= */
 const canSpeak = "speechSynthesis" in window;
@@ -319,16 +312,16 @@ async function gemini({system, history = [], user, temperature = .7, maxTokens =
   contents.push({role:"user", parts:[{text:user}]});
   const body = {contents, generationConfig:{temperature, maxOutputTokens:maxTokens, responseMimeType:"application/json", thinkingConfig:{thinkingBudget:0}}};
   if (system) body.systemInstruction = {parts:[{text:system}]};
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
-    method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":KEY}, body: JSON.stringify(body)
-  });
+  const r = OWN_KEY
+    ? await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":OWN_KEY}, body: JSON.stringify(body)})
+    : await fetch(PROXY, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)});
   if (!r.ok){ const e = new Error("http"); e.status = r.status; throw e; }
   const j = await r.json();
   const t = j?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || "";
   try{ return JSON.parse(t); }catch{ const m = t.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw new Error("parse"); }
 }
 function errCopy(e){
-  if (e?.status === 400 || e?.status === 403) return "La clave de Gemini no es válida. Revísala en Ajustes.";
+  if (e?.status === 400 || e?.status === 403) return OWN_KEY ? "Tu clave de Gemini no es válida. Revísala o bórrala en Ajustes." : "La IA no responde ahora mismo. Vuelve a intentarlo en un rato.";
   if (e?.status === 429) return "Has llegado al límite gratuito de Gemini por ahora. Prueba en unos minutos.";
   if (e?.status >= 500) return "Gemini está saturado ahora mismo. Vuelve a intentarlo.";
   if (!navigator.onLine) return "No tienes conexión.";
@@ -512,7 +505,6 @@ async function respond(text){
 }
 function stopAll(){ active = false; try{ rec?.abort(); }catch{} rec = null; if (canSpeak) speechSynthesis.cancel(); setState("idle"); }
 $("mic").onclick = () => {
-  if (needKey()) return;
   if (state === "listening"){ try{ rec?.stop(); }catch{} return; }
   if (state === "speaking"){ if (canSpeak) speechSynthesis.cancel(); active = true; listen(); return; }
   if (state === "thinking") return;
@@ -520,10 +512,9 @@ $("mic").onclick = () => {
   if (turns.length === 1 && !greeted){ greeted = true; setState("speaking"); speak(mode.open).then(() => { if (active) listen(); }); return; }
   listen();
 };
-$("sendTyped").onclick = () => { const t = $("typed").value.trim(); if (!t || needKey()) return; $("typed").value = ""; active = false; respond(t); };
+$("sendTyped").onclick = () => { const t = $("typed").value.trim(); if (!t) return; $("typed").value = ""; active = false; respond(t); };
 $("resetTalk").onclick = () => { stopAll(); startTalk(); };
 $("evalTalk").onclick = async () => {
-  if (needKey()) return;
   const said = turns.filter(t=>t.role==="user");
   if (!said.length){ $("talkStatus").textContent = "Habla o escribe al menos una respuesta para poder valorarte."; return; }
   stopAll(); $("evalTalk").disabled = true; $("talkStatus").textContent = "Preparando tu valoración…";
@@ -589,7 +580,6 @@ function startTimer(){
 }
 async function newTask(){
   stopTimer(); stopDictation();
-  if (needKey()) return;
   const st = $("examStatus"); $("examResult").replaceChildren();
   $("examTask").hidden = false;
   $("examTag").textContent = part.skill+" · Aptis"; $("examTitle").textContent = part.name; $("examHow").textContent = part.how;
@@ -630,7 +620,6 @@ $("examMic").onclick = () => {
 async function evalTask(){
   const ans = $("examInput").value.trim(), st = $("examStatus");
   if (!ans || !task){ st.textContent = "Responde primero, hablando o escribiendo."; return; }
-  if (needKey()) return;
   stopTimer(); stopDictation();
   $("examEval").disabled = true; st.textContent = "Corrigiendo como un examinador de Aptis…";
   try{
