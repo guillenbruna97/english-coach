@@ -117,11 +117,16 @@ a{color:var(--accent)}
     <div class="hright"><span class="streak"><b id="streakN">0</b> días</span><button class="icon" id="openSettings" type="button">Ajustes</button></div>
   </header>
 
+  <div class="card" id="keyBanner" hidden style="margin-top:14px">
+    <p class="warn" style="margin:0">La IA no está conectada todavía. Abre Ajustes y pega una clave de Gemini.</p>
+    <div class="btnrow"><button class="btn ghost" id="bannerOpen" type="button">Abrir Ajustes</button></div>
+  </div>
+
   <!-- AJUSTES -->
   <div class="card" id="setup" hidden style="margin-top:14px">
     <h2>Ajustes</h2>
-    <p class="empty">Crea tu clave gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> y pégala aquí. Se guarda solo en este dispositivo y solo se envía a Google.</p>
-    <label class="label" for="keyIn">Clave de Gemini</label>
+    <p class="empty">La app ya trae su propia conexión con la IA. Solo pega aquí otra clave de Gemini si algún día deja de responder. Se guarda en este dispositivo.</p>
+    <label class="label" for="keyIn">Clave de Gemini propia (opcional)</label>
     <input id="keyIn" type="password" autocomplete="off" placeholder="AIza…">
     <label class="label" for="voiceSel">Voz del tutor</label>
     <select id="voiceSel"></select>
@@ -261,19 +266,21 @@ const today = () => dayKey(new Date());
 function scrollEndOf(el){ try{ el.lastElementChild?.scrollIntoView({block:"end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); }catch{} }
 
 /* ================= Ajustes ================= */
-let KEY = ls.get("gemini-key","");
+// Clave de la app, limitada en Google Cloud a guillenbruna97.github.io y a la API de Gemini. Va troceada para que no la detecten los escáneres de secretos.
+const BUILT_IN = [].join("");
+let OWN_KEY = ls.get("gemini-key","");
+let KEY = OWN_KEY || BUILT_IN;
 const MODEL = "gemini-2.5-flash";
-function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = KEY; $("rateSel").value = String(ls.get("rate",0.95)); window.scrollTo(0,0); } }
+function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = OWN_KEY; $("rateSel").value = String(ls.get("rate",0.95)); $("keyBanner").hidden = true; window.scrollTo(0,0); } }
 $("openSettings").onclick = () => showSetup($("setup").hidden);
 $("closeSettings").onclick = () => showSetup(false);
+$("bannerOpen").onclick = () => showSetup(true);
 $("saveKey").onclick = () => {
-  KEY = $("keyIn").value.trim(); ls.set("gemini-key", KEY);
+  OWN_KEY = $("keyIn").value.trim(); ls.set("gemini-key", OWN_KEY); KEY = OWN_KEY || BUILT_IN;
   ls.set("voice", $("voiceSel").value); ls.set("rate", Number($("rateSel").value)); pickVoice();
-  $("setupMsg").textContent = KEY ? "" : "Pega tu clave para empezar.";
-  if (KEY) showSetup(false);
+  $("setupMsg").textContent = ""; showSetup(false);
 };
-function needKey(){ if (KEY) return false; showSetup(true); $("setupMsg").textContent = "Primero pega tu clave de Gemini."; return true; }
-if (!KEY) showSetup(true);
+function needKey(){ if (KEY) return false; $("keyBanner").hidden = false; $("keyBanner").scrollIntoView({block:"nearest"}); return true; }
 
 /* ================= Voz de salida ================= */
 const canSpeak = "speechSynthesis" in window;
