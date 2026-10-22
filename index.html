@@ -265,7 +265,7 @@ function scrollEndOf(el){ try{ el.lastElementChild?.scrollIntoView({block:"end",
 // Sin clave propia, la app llama al Worker de Cloudflare (worker/), que guarda la clave de Gemini como secreto.
 const PROXY = "https://english-coach-api.guillenbruna97.workers.dev";
 let OWN_KEY = ls.get("gemini-key","");
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-flash-lite-latest";
 function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = OWN_KEY; $("rateSel").value = String(ls.get("rate",0.95)); window.scrollTo(0,0); } }
 $("openSettings").onclick = () => showSetup($("setup").hidden);
 $("closeSettings").onclick = () => showSetup(false);
@@ -310,7 +310,7 @@ const sayBtn = text => canSpeak && text ? h("button",{class:"say",type:"button",
 async function gemini({system, history = [], user, temperature = .7, maxTokens = 1200}){
   const contents = history.map(t => ({role:t.role, parts:[{text:t.text}]}));
   contents.push({role:"user", parts:[{text:user}]});
-  const body = {contents, generationConfig:{temperature, maxOutputTokens:maxTokens, responseMimeType:"application/json", thinkingConfig:{thinkingBudget:0}}};
+  const body = {contents, generationConfig:{temperature, maxOutputTokens:maxTokens, responseMimeType:"application/json"}};
   if (system) body.systemInstruction = {parts:[{text:system}]};
   const r = OWN_KEY
     ? await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":OWN_KEY}, body: JSON.stringify(body)})

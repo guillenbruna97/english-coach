@@ -12,7 +12,7 @@ App web personal para practicar inglés de cara a entrevistas de trabajo y al ex
 
 ## Cómo funciona
 - Es un solo archivo `index.html`, sin build ni dependencias. Las fuentes vienen de Google Fonts.
-- La IA es Gemini `gemini-2.5-flash`. La app llama a un **Worker de Cloudflare** (`worker/`, en https://english-coach-api.guillenbruna97.workers.dev) que guarda la clave de Gemini como secreto. La clave nunca está en el código ni en el navegador. El Worker solo acepta peticiones desde `guillenbruna97.github.io` (y `localhost:8000` para pruebas) y solo hacia ese modelo.
+- La IA es Gemini. El Worker usa primero `gemini-flash-lite-latest` y, si se queda sin cupo o está saturado, `gemini-3.8-flash`. Con clave gratuita, 3.8 Flash solo da 20 peticiones al día, por eso va de reserva. La app llama a un **Worker de Cloudflare** (`worker/`, en https://english-coach-api.guillenbruna97.workers.dev) que guarda la clave de Gemini como secreto. La clave nunca está en el código ni en el navegador. El Worker solo acepta peticiones desde `guillenbruna97.github.io` (y `localhost:8000` para pruebas) y solo hacia esos modelos.
 - En Ajustes se puede pegar una clave propia (opcional). Si hay una, la app llama a Google directamente y no pasa por el Worker.
 - Cambiar la clave del Worker: `cd worker && npx wrangler secret put GEMINI_KEY`. Volver a publicarlo: `cd worker && npx wrangler deploy`. Clave gratis en https://aistudio.google.com/apikey (mejor en un proyecto sin facturación, para que nunca cobre).
 - Todo el progreso vive en el `localStorage` del dispositivo. El Worker no guarda nada.
