@@ -1,0 +1,668 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#13203B">
+<title>English Coach</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: app de una columna para móvil. Cabecera fija con racha, barra de pestañas abajo, micro flotante en «Hablar». Correcciones con estilo de bolígrafo de profesor. */
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --ink:#13203B; --muted:#5A6580; --line:#DCE1EB;
+  --accent:#2C55E0; --accent-ink:#FFFFFF; --accent-soft:#E3E9FD;
+  --wrong:#C2352B; --right:#1C7A4B; --mark:#FFE46B; --mark-ink:#13203B; --live:#E0412C;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --nav:64px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1322; --surface:#171E31; --ink:#E7EBF4; --muted:#98A2BC; --line:#2A3350;
+  --accent:#7D9BFF; --accent-ink:#0E1322; --accent-soft:#222D4E;
+  --wrong:#FF8577; --right:#5FD39A; --mark:#E8C93A; --mark-ink:#0E1322; --live:#FF6B57; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:640px;margin:0 auto;padding-bottom:calc(var(--nav) + 130px + env(safe-area-inset-bottom,0px))}
+header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:10px;border-bottom:1px solid var(--line)}
+h1{font:800 1.3rem/1.1 var(--display);margin:0}
+h1 small{display:block;font:500 .7rem var(--mono);color:var(--muted);letter-spacing:.07em;text-transform:uppercase;margin-top:3px}
+h2{font:700 1.1rem/1.2 var(--display);margin:0;text-wrap:balance}
+.hright{display:flex;gap:8px;align-items:center}
+.streak{font:500 .82rem var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;white-space:nowrap}
+.streak b{font:800 1.05rem var(--display)}
+.label{font:500 .72rem var(--mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.icon{font:inherit;background:var(--surface);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 11px;cursor:pointer;font-size:.85rem}
+section.tab{display:flex;flex-direction:column;gap:14px;padding-top:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px}
+textarea{resize:vertical}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:700 .95rem var(--body);border:0;border-radius:12px;padding:12px 16px;background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.say{font:500 .78rem var(--mono);border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:4px 10px;cursor:pointer}
+.thread{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:92%;border-radius:16px;padding:11px 14px;overflow-wrap:anywhere}
+.msg.tutor{background:var(--surface);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.msg.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end;border-bottom-right-radius:4px}
+.msg.interim{opacity:.6;font-style:italic}
+.msg .row{margin-top:6px}
+.fix{border-left:3px solid var(--mark);background:var(--surface);border-radius:4px 12px 12px 4px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:.93rem}
+.fix.clean{border-left-color:var(--right)}
+.pair{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.fix s,.pair s{color:var(--wrong);text-decoration-thickness:2px}
+.ok{color:var(--right);font-weight:700}
+.why{color:var(--muted);font-size:.86rem;flex-basis:100%}
+.better{background:var(--mark);color:var(--mark-ink);padding:2px 6px;border-radius:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.empty{color:var(--muted);font-size:.93rem;margin:0}
+.warn{color:var(--wrong);font-size:.9rem;margin:0}
+.status{font-size:.88rem;color:var(--muted);min-height:1.2em;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.part{text-align:left;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.part b{font:700 .95rem var(--display)} .part span{font-size:.8rem;color:var(--muted)}
+.part[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.task{white-space:pre-wrap}
+.timer{font:500 2rem/1 var(--mono);font-variant-numeric:tabular-nums}
+.timer small{display:block;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.timer.over{color:var(--wrong)}
+.level{display:flex;gap:6px}
+.level i{font-style:normal;font:700 .85rem var(--mono);padding:5px 9px;border-radius:8px;border:1px solid var(--line);color:var(--muted)}
+.level i.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+ul.clean{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.stat b{display:block;font:800 1.6rem/1.1 var(--display);font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.cal div{aspect-ratio:1;max-width:100%;border-radius:6px;background:var(--line)}
+.cal .l1{background:var(--accent-soft)} .cal .l2{background:color-mix(in srgb,var(--accent) 55%,var(--accent-soft))} .cal .l3{background:var(--accent)}
+.cal .today{outline:2px solid var(--ink);outline-offset:1px}
+.dock{position:fixed;left:0;right:0;bottom:calc(var(--nav) + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.dock .in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.mic{flex:none;width:70px;height:70px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center}
+.mic.small{width:48px;height:48px}
+.mic svg{width:30px;height:30px} .mic.small svg{width:22px;height:22px}
+.mic.listening{background:var(--live)} .mic.busy{background:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.mic.listening{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--live) 45%,transparent)}50%{box-shadow:0 0 0 14px transparent}}
+  .msg,.fix{animation:in .25s ease-out}@keyframes in{from{transform:translateY(4px);opacity:.6}to{transform:none;opacity:1}}}
+.dock .txt{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.state{font:700 1rem var(--display)} .sub{font-size:.84rem;color:var(--muted)}
+.switch{display:flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted)} .switch input{width:auto}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:var(--nav)}
+nav button{font:700 .76rem var(--body);background:none;border:0;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+nav svg{width:22px;height:22px}
+nav button[aria-selected="true"]{color:var(--accent)}
+[hidden]{display:none!important}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>English Coach<small>Objetivo Aptis B2</small></h1>
+    <div class="hright"><span class="streak"><b id="streakN">0</b> días</span><button class="icon" id="openSettings" type="button">Ajustes</button></div>
+  </header>
+
+  <!-- AJUSTES -->
+  <div class="card" id="setup" hidden style="margin-top:14px">
+    <h2>Ajustes</h2>
+    <p class="empty">Crea tu clave gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> y pégala aquí. Se guarda solo en este dispositivo y solo se envía a Google.</p>
+    <label class="label" for="keyIn">Clave de Gemini</label>
+    <input id="keyIn" type="password" autocomplete="off" placeholder="AIza…">
+    <label class="label" for="voiceSel">Voz del tutor</label>
+    <select id="voiceSel"></select>
+    <label class="label" for="rateSel">Velocidad de la voz</label>
+    <select id="rateSel"><option value="0.85">Lenta</option><option value="0.95" selected>Normal</option><option value="1.05">Rápida</option></select>
+    <div class="btnrow"><button class="btn" id="saveKey" type="button">Guardar</button><button class="btn ghost" id="closeSettings" type="button">Cerrar</button></div>
+    <p class="warn" id="setupMsg"></p>
+    <hr style="border:0;border-top:1px solid var(--line);width:100%">
+    <span class="label">Copia de seguridad del progreso</span>
+    <p class="empty">Tu progreso vive en este dispositivo. Si cambias de móvil, copia este texto y pégalo en el nuevo.</p>
+    <div class="btnrow"><button class="btn ghost" id="exportBtn" type="button">Copiar copia</button><button class="btn ghost" id="importBtn" type="button">Restaurar copia</button></div>
+    <textarea id="backupTxt" rows="3" hidden placeholder="Pega aquí tu copia y pulsa Restaurar"></textarea>
+    <p class="status" id="backupMsg"></p>
+  </div>
+
+  <!-- HABLAR -->
+  <section class="tab" id="tab-talk">
+    <div class="chips" id="modes" role="group" aria-label="Tema"></div>
+    <div class="card" id="offerBox" hidden>
+      <label class="label" for="offer">Oferta o puesto</label>
+      <textarea id="offer" rows="3" placeholder="Pega la oferta o escribe el puesto. Ej. Brand Marketing Manager en una scale-up SaaS B2B"></textarea>
+      <label class="label" for="me">Tu perfil en una línea (opcional)</label>
+      <input id="me" type="text" placeholder="Ej. Head of Brand, marketing B2B y SaaS">
+    </div>
+    <p class="warn" id="noSR" hidden>Este navegador no reconoce la voz. Usa Chrome en Android o escribe abajo.</p>
+    <div class="thread" id="thread" aria-live="polite"></div>
+    <div class="card">
+      <label class="label" for="typed">O escribe tu respuesta</label>
+      <textarea id="typed" rows="2" placeholder="Write in English…"></textarea>
+      <div class="btnrow"><button class="btn" id="sendTyped" type="button">Enviar</button><button class="btn ghost" id="evalTalk" type="button">Valorar mi nivel</button><button class="btn ghost" id="resetTalk" type="button">Empezar de nuevo</button></div>
+    </div>
+    <p class="status" id="talkStatus"></p>
+  </section>
+
+  <!-- EXAMEN -->
+  <section class="tab" id="tab-exam" hidden>
+    <div class="card">
+      <span class="label">Aptis General · British Council</span>
+      <h2>Practica Speaking y Writing con el formato del examen</h2>
+      <p class="empty">Resultados en unas 48–72 h. Aquí practicas las dos destrezas que más cuestan. La nota es orientativa.</p>
+    </div>
+    <div><div class="label" style="margin-bottom:8px">Speaking</div><div class="grid2" id="partsS"></div></div>
+    <div><div class="label" style="margin-bottom:8px">Writing</div><div class="grid2" id="partsW"></div></div>
+    <div class="card" id="examTask" hidden>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+        <div style="min-width:0;flex:1"><span class="label" id="examTag"></span><h2 id="examTitle"></h2></div>
+        <div class="timer" id="examTimer">0:00<small id="examTimerLbl">Pulsa empezar</small></div>
+      </div>
+      <p class="empty" id="examHow"></p>
+      <div class="task" id="examPrompt"></div>
+      <div class="btnrow"><button class="say" id="examSay" type="button">▶ Escuchar enunciado</button></div>
+      <div class="btnrow"><button class="btn ghost" id="examTimerBtn" type="button">Empezar cronómetro</button></div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <button class="mic small" id="examMic" type="button" aria-label="Dictar respuesta" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+        <textarea id="examInput" rows="7" placeholder="Your answer…"></textarea>
+      </div>
+      <p class="status" id="examWords">0 palabras</p>
+      <div class="btnrow"><button class="btn" id="examEval" type="button">Corregir</button><button class="btn ghost" id="examNew" type="button">Otra tarea</button></div>
+    </div>
+    <p class="status" id="examStatus"></p>
+    <div id="examResult" style="display:flex;flex-direction:column;gap:12px"></div>
+  </section>
+
+  <!-- PROGRESO -->
+  <section class="tab" id="tab-prog" hidden>
+    <div class="stats">
+      <div class="stat"><b id="stStreak">0</b><span>días seguidos</span></div>
+      <div class="stat"><b id="stToday">0</b><span>respuestas hoy</span></div>
+      <div class="stat"><b id="stTotal">0</b><span>días practicados</span></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Últimas 4 semanas</h2><span class="label">Meta 10 al día</span></div>
+      <div class="cal" id="cal"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><h2>Tus errores frecuentes</h2><button class="icon" id="clearMist" type="button">Borrar</button></div>
+      <div id="mistakes"></div>
+    </div>
+    <div class="card"><h2>Repaso rápido</h2><div id="flash"></div></div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="tab" id="tab-plan" hidden>
+    <div class="card">
+      <h2>Tu rutina de 20 minutos</h2>
+      <ul class="clean">
+        <li><b>10 min · Hablar.</b> Un tema por día, con manos libres. Meta: 10 respuestas.</li>
+        <li><b>5 min · Repaso.</b> Pasa las tarjetas de «Progreso».</li>
+        <li><b>5 min · Examen.</b> Una tarea de Speaking o Writing, alternando.</li>
+        <li><b>Antes de cada entrevista.</b> Modo «Entrevista» con la oferta real.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Para escuchar (YouTube)</h2>
+      <ul class="clean">
+        <li>The Futur (Chris Do): vender servicios y poner precio</li>
+        <li>Alex Hormozi: ofertas y ventas</li>
+        <li>Exit Five (Dave Gerhardt): marketing B2B y SaaS</li>
+        <li>Marketing Against the Grain (HubSpot): marketing con IA</li>
+        <li>BBC Learning English, 6 Minute English: inglés general</li>
+      </ul>
+      <p class="empty">Empieza con subtítulos en inglés y quítalos cuando lo sigas bien.</p>
+    </div>
+  </section>
+</div>
+
+<div class="dock" id="dock"><div class="in">
+  <button class="mic" id="mic" type="button" aria-label="Empezar a hablar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <div class="txt">
+    <span class="state" id="state">Pulsa para hablar</span>
+    <span class="sub" id="sub">Habla en inglés. Te contesta en voz alta y te corrige en pantalla.</span>
+    <label class="switch"><input type="checkbox" id="handsFree" checked> Manos libres</label>
+  </div>
+</div></div>
+
+<nav><div class="in" role="tablist">
+  <button role="tab" data-tab="talk" aria-selected="true" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Hablar</button>
+  <button role="tab" data-tab="exam" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l1 3h3v15H5V6h3z"/><path d="M9 13l2 2 4-4"/></svg>Examen</button>
+  <button role="tab" data-tab="prog" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progreso</button>
+  <button role="tab" data-tab="plan" aria-selected="false" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 10h16"/></svg>Plan</button>
+</div></nav>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})){ if (k==="class") el.className=v; else if (k.startsWith("on")) el.addEventListener(k.slice(2),v); else el.setAttribute(k,v); }
+  for (const c of kids.flat()) if (c!=null && c!==false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+const arr = x => Array.isArray(x) ? x : [];
+const str = x => typeof x === "string" ? x : (x==null ? "" : String(x));
+const ls = {get(k,d){ try{ const v = localStorage.getItem(k); return v==null ? d : JSON.parse(v); }catch{ return d; } }, set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }};
+const dayKey = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const today = () => dayKey(new Date());
+function scrollEndOf(el){ try{ el.lastElementChild?.scrollIntoView({block:"end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"}); }catch{} }
+
+/* ================= Ajustes ================= */
+let KEY = ls.get("gemini-key","");
+const MODEL = "gemini-2.5-flash";
+function showSetup(show){ $("setup").hidden = !show; if (show){ $("keyIn").value = KEY; $("rateSel").value = String(ls.get("rate",0.95)); window.scrollTo(0,0); } }
+$("openSettings").onclick = () => showSetup($("setup").hidden);
+$("closeSettings").onclick = () => showSetup(false);
+$("saveKey").onclick = () => {
+  KEY = $("keyIn").value.trim(); ls.set("gemini-key", KEY);
+  ls.set("voice", $("voiceSel").value); ls.set("rate", Number($("rateSel").value)); pickVoice();
+  $("setupMsg").textContent = KEY ? "" : "Pega tu clave para empezar.";
+  if (KEY) showSetup(false);
+};
+function needKey(){ if (KEY) return false; showSetup(true); $("setupMsg").textContent = "Primero pega tu clave de Gemini."; return true; }
+if (!KEY) showSetup(true);
+
+/* ================= Voz de salida ================= */
+const canSpeak = "speechSynthesis" in window;
+let voice = null;
+function listVoices(){
+  if (!canSpeak) return;
+  const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+  const sel = $("voiceSel"), saved = ls.get("voice","");
+  sel.replaceChildren(...vs.map(v => h("option",{value:v.name}, v.name+" ("+v.lang+")")));
+  if (saved && vs.some(v=>v.name===saved)) sel.value = saved;
+  pickVoice();
+}
+function pickVoice(){
+  if (!canSpeak) return;
+  const vs = speechSynthesis.getVoices(), saved = ls.get("voice","");
+  voice = vs.find(v=>v.name===saved) || vs.find(v=>/en[-_]GB/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+}
+if (canSpeak){ listVoices(); speechSynthesis.onvoiceschanged = listVoices; }
+function speak(text){
+  return new Promise(res => {
+    if (!canSpeak || !text) return res();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = voice?.lang || "en-GB"; if (voice) u.voice = voice; u.rate = Number(ls.get("rate",0.95)) || .95;
+    let done = false; const fin = () => { if (!done){ done = true; res(); } };
+    u.onend = fin; u.onerror = fin;
+    setTimeout(fin, 4000 + text.length * 90);
+    speechSynthesis.speak(u);
+  });
+}
+const sayBtn = text => canSpeak && text ? h("button",{class:"say",type:"button",onclick:()=>speak(text)},"▶ Escuchar") : null;
+
+/* ================= Gemini ================= */
+async function gemini({system, history = [], user, temperature = .7, maxTokens = 1200}){
+  const contents = history.map(t => ({role:t.role, parts:[{text:t.text}]}));
+  contents.push({role:"user", parts:[{text:user}]});
+  const body = {contents, generationConfig:{temperature, maxOutputTokens:maxTokens, responseMimeType:"application/json", thinkingConfig:{thinkingBudget:0}}};
+  if (system) body.systemInstruction = {parts:[{text:system}]};
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
+    method:"POST", headers:{"Content-Type":"application/json","x-goog-api-key":KEY}, body: JSON.stringify(body)
+  });
+  if (!r.ok){ const e = new Error("http"); e.status = r.status; throw e; }
+  const j = await r.json();
+  const t = j?.candidates?.[0]?.content?.parts?.map(p=>p.text||"").join("") || "";
+  try{ return JSON.parse(t); }catch{ const m = t.match(/\{[\s\S]*\}/); if (m) return JSON.parse(m[0]); throw new Error("parse"); }
+}
+function errCopy(e){
+  if (e?.status === 400 || e?.status === 403) return "La clave de Gemini no es válida. Revísala en Ajustes.";
+  if (e?.status === 429) return "Has llegado al límite gratuito de Gemini por ahora. Prueba en unos minutos.";
+  if (e?.status >= 500) return "Gemini está saturado ahora mismo. Vuelve a intentarlo.";
+  if (!navigator.onLine) return "No tienes conexión.";
+  return "No ha llegado respuesta. Vuelve a intentarlo.";
+}
+
+/* ================= Progreso ================= */
+let P = ls.get("progress", null) || {activity:{}, mistakes:ls.get("mistakes", [])};
+function saveP(){
+  const keys = Object.keys(P.activity).sort(); while (keys.length > 180) delete P.activity[keys.shift()];
+  P.mistakes = arr(P.mistakes).sort((a,b)=>(b.count-a.count) || str(b.last).localeCompare(str(a.last))).slice(0,100);
+  ls.set("progress", P); renderProgress();
+}
+function logActivity(){ const t = today(); P.activity[t] = (P.activity[t]||0)+1; }
+function logMistakes(list){
+  for (const c of arr(list)){
+    const w = str(c.wrong).trim(), r = str(c.right).trim(); if (!w || !r) continue;
+    const key = (w+"→"+r).toLowerCase(), m = P.mistakes.find(x=>x.key===key);
+    if (m){ m.count++; m.last = today(); } else P.mistakes.push({key, wrong:w, right:r, why:str(c.why), count:1, last:today()});
+  }
+}
+function streak(){
+  let n = 0; const d = new Date();
+  if (!P.activity[dayKey(d)]) d.setDate(d.getDate()-1);
+  while (P.activity[dayKey(d)]){ n++; d.setDate(d.getDate()-1); }
+  return n;
+}
+function renderProgress(){
+  const s = streak();
+  $("streakN").textContent = s; $("stStreak").textContent = s;
+  $("stToday").textContent = P.activity[today()] || 0;
+  $("stTotal").textContent = Object.keys(P.activity).length;
+  const cal = $("cal"); cal.replaceChildren();
+  const d = new Date(); d.setDate(d.getDate()-27);
+  for (let i=0;i<28;i++){
+    const k = dayKey(d), n = P.activity[k]||0;
+    cal.append(h("div",{class:(n>=10?"l3":n>=5?"l2":n>0?"l1":"")+(i===27?" today":""), title:k+": "+n+" respuestas"}));
+    d.setDate(d.getDate()+1);
+  }
+  const box = $("mistakes"); box.replaceChildren();
+  if (!P.mistakes.length) box.append(h("p",{class:"empty"},"Aquí aparecerán los errores que te vaya corrigiendo, con los que más repites arriba."));
+  else for (const m of P.mistakes.slice(0,10)) box.append(h("div",{class:"fix"},
+    h("div",{class:"pair"}, h("s",{},m.wrong), "→", h("span",{class:"ok"},m.right), m.count>1 ? h("span",{class:"label"},"×"+m.count) : null),
+    m.why ? h("span",{class:"why"},m.why) : null));
+  renderFlash();
+}
+let flashI = 0, flashShow = false;
+function renderFlash(){
+  const box = $("flash"); box.replaceChildren();
+  if (!P.mistakes.length){ box.append(h("p",{class:"empty"},"Cuando tengas errores guardados, aquí los repasas como tarjetas.")); return; }
+  const m = P.mistakes[flashI % P.mistakes.length];
+  box.append(h("div",{style:"display:flex;flex-direction:column;gap:8px"},
+    h("span",{class:"label"},"¿Cómo se dice bien?"),
+    h("div",{class:"pair"}, h("s",{}, m.wrong)),
+    flashShow ? h("div",{class:"fix"}, h("span",{class:"ok"}, m.right), m.why ? h("span",{class:"why"},m.why):null) : null,
+    h("div",{class:"btnrow"},
+      flashShow ? sayBtn(m.right) : h("button",{class:"btn ghost",type:"button",onclick:()=>{flashShow=true;renderFlash();}},"Ver respuesta"),
+      h("button",{class:"btn ghost",type:"button",onclick:()=>{flashI++;flashShow=false;renderFlash();}},"Siguiente"))));
+}
+$("clearMist").onclick = () => { P.mistakes = []; saveP(); };
+$("exportBtn").onclick = async () => {
+  const txt = JSON.stringify(P);
+  $("backupTxt").hidden = false; $("backupTxt").value = txt;
+  try{ await navigator.clipboard.writeText(txt); $("backupMsg").textContent = "Copia copiada. Guárdala en tus notas o mándatela por WhatsApp."; }
+  catch{ $("backupTxt").select(); $("backupMsg").textContent = "Copia el texto de arriba."; }
+};
+$("importBtn").onclick = () => {
+  const box = $("backupTxt");
+  if (box.hidden || !box.value.trim()){ box.hidden = false; box.value = ""; box.focus(); $("backupMsg").textContent = "Pega tu copia y vuelve a pulsar Restaurar."; return; }
+  try{ const j = JSON.parse(box.value); if (!j || typeof j.activity !== "object") throw 0; P = {activity:j.activity||{}, mistakes:arr(j.mistakes)}; saveP(); $("backupMsg").textContent = "Progreso restaurado."; }
+  catch{ $("backupMsg").textContent = "Ese texto no es una copia válida."; }
+};
+
+/* ================= Correcciones ================= */
+function fixBlock(cs, better){
+  cs = arr(cs).filter(c => str(c.wrong) && str(c.right));
+  if (!cs.length && !str(better)) return h("div",{class:"fix clean"}, h("span",{class:"ok"},"Bien dicho, sin errores importantes."));
+  return h("div",{class:"fix"},
+    cs.map(c => h("div",{class:"pair"}, h("s",{},str(c.wrong)), "→", h("span",{class:"ok"},str(c.right)), str(c.why) ? h("span",{class:"why"},str(c.why)) : null)),
+    str(better) ? h("div",{}, h("span",{class:"label"},"Más natural "), h("span",{class:"better"},str(better))) : null);
+}
+function resultCard(title, r){
+  const lv = str(r?.level).toUpperCase();
+  return h("div",{class:"card"},
+    h("span",{class:"label"},"Nivel orientativo"),
+    h("div",{class:"level"}, ["A2","B1","B2","C1"].map(l => h("i",{class: l===lv || (lv==="C"&&l==="C1") ? "on" : ""}, l))),
+    h("h2",{}, title),
+    str(r?.verdict) ? h("p",{style:"margin:0"}, str(r.verdict)) : null,
+    arr(r?.strengths).length ? h("div",{}, h("div",{class:"label"},"Lo que haces bien"), h("ul",{class:"clean"}, arr(r.strengths).map(x=>h("li",{},str(x))))) : null,
+    arr(r?.improve).length ? h("div",{}, h("div",{class:"label"},"Para subir de nivel"), h("ul",{class:"clean"}, arr(r.improve).map(x=>h("li",{},str(x))))) : null,
+    arr(r?.phrases).length ? h("div",{}, h("div",{class:"label"},"Frases útiles"), h("ul",{class:"clean"}, arr(r.phrases).map(x=>h("li",{}, str(x)+" ", sayBtn(str(x)))))) : null);
+}
+const tutorMsg = text => h("div",{class:"msg tutor"}, h("div",{},text), h("div",{class:"row"}, sayBtn(text)));
+
+/* ================= Hablar ================= */
+const MODES = [
+  {id:"work", es:"Tu trabajo", open:"Hi! Tell me about your work. What are you busy with this week?"},
+  {id:"brands", es:"Marcas y marketing", open:"Let's talk about brands. Which brand has really good marketing right now, in your opinion?"},
+  {id:"travel", es:"Viajes", open:"What's the best place you've ever travelled to? What made it special?"},
+  {id:"free", es:"Tema libre", open:"Hi! What would you like to talk about today?"},
+  {id:"interview", es:"Entrevista", open:"Thanks for coming in today. To start, could you tell me a little about yourself?"},
+  {id:"aptis", es:"Speaking Aptis", open:"Let's practise Aptis Speaking, Part 1. First question: can you tell me about the town or city where you live?"},
+];
+let mode = MODES[ls.get("mode-i",0)] || MODES[0], turns = [], greeted = false;
+$("offer").value = ls.get("offer",""); $("me").value = ls.get("me-line","");
+$("offer").addEventListener("change", () => ls.set("offer", $("offer").value));
+$("me").addEventListener("change", () => ls.set("me-line", $("me").value));
+function renderModes(){
+  const box = $("modes"); box.replaceChildren();
+  MODES.forEach((m,i) => box.append(h("button",{class:"chip",type:"button","aria-pressed":String(m===mode),onclick:()=>{ stopAll(); mode=m; ls.set("mode-i",i); renderModes(); startTalk(); }}, m.es)));
+  $("offerBox").hidden = mode.id !== "interview";
+}
+function talkSystem(){
+  const base = `You are a friendly English speaking partner for a Spanish professional (marketing, around B1 moving to B2) preparing for job interviews in English and the Aptis General exam. The student's words usually come from speech recognition, so ignore punctuation, capitals and small recognition glitches, and only correct real language mistakes.`;
+  const task = {
+    interview: `Act as a hiring manager interviewing the student for this role: """${$("offer").value.trim() || "a marketing role in an international company"}""". Candidate: ${$("me").value.trim() || "a marketing professional"}. Ask realistic questions one at a time: about yourself, motivation, experience, a behavioural question about a real situation, a role-specific question, and questions for us near the end.`,
+    aptis: `Act as an Aptis Speaking examiner. Go through the parts in order: Part 1 (3 short personal questions), Part 2 (describe an imagined photo you describe in one sentence, then opinion questions), Part 3 (compare two imagined photos), Part 4 (three connected questions; ask the student to talk for 2 minutes). Say which part you are in when it changes.`,
+  }[mode.id] || `Topic: ${mode.es}. Chat naturally, like a friendly colleague.`;
+  return `${base}
+${task}
+Your reply will be read aloud: natural, clear English at B2 level, 1 to 3 short sentences, always ending with ONE question. No lists, emojis or markdown.
+For the student's LAST message only: at most 2 of the most important mistakes, "why" in Spanish from Spain using "tú" (max 15 words), and "better", a more natural version of their message ("" if it was already natural).
+Reply with only JSON: {"reply": string, "corrections": [{"wrong": string, "right": string, "why": string}], "better": string}`;
+}
+function startTalk(){
+  turns = [{role:"model", text:mode.open}]; greeted = false;
+  $("thread").replaceChildren(tutorMsg(mode.open));
+  $("talkStatus").textContent = "";
+  setState("idle");
+}
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, state = "idle", interimEl = null, active = false;
+if (!SR) $("noSR").hidden = false;
+function setState(s, sub){
+  state = s; const mic = $("mic");
+  mic.classList.toggle("listening", s==="listening"); mic.classList.toggle("busy", s==="thinking"||s==="speaking");
+  const T = {idle:["Pulsa para hablar","Habla en inglés. Te contesta en voz alta y te corrige en pantalla."],
+    listening:["Te escucho…","Habla con calma. Cuando pares, te contesto."],
+    thinking:["Pensando…",""], speaking:["Hablando…","Toca el micro para cortarle y hablar tú."]}[s];
+  $("state").textContent = T[0]; $("sub").textContent = sub ?? T[1];
+  mic.setAttribute("aria-label", s==="listening" ? "Dejar de escuchar" : "Empezar a hablar");
+}
+function listen(){
+  if (!SR){ setState("idle","Tu navegador no reconoce la voz. Escribe tu respuesta."); return; }
+  rec = new SR(); rec.lang = "en-GB"; rec.interimResults = true; rec.continuous = false;
+  let finalText = "";
+  rec.onresult = e => {
+    let interim = ""; finalText = "";
+    for (const r of e.results){ if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript; }
+    if (!interimEl){ interimEl = h("div",{class:"msg me interim"}); $("thread").append(interimEl); }
+    interimEl.textContent = (finalText+" "+interim).trim(); scrollEndOf($("thread"));
+  };
+  rec.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed"){ active = false; setState("idle","Permite el micrófono para esta página en los ajustes del navegador."); } };
+  rec.onend = () => {
+    rec = null;
+    const text = (finalText || interimEl?.textContent || "").trim();
+    if (interimEl){ interimEl.remove(); interimEl = null; }
+    if (!active){ if (state === "listening") setState("idle"); return; }
+    if (!text){ active = false; setState("idle","No te he oído. Toca el micro y habla."); return; }
+    respond(text);
+  };
+  setState("listening");
+  try{ rec.start(); }catch{ setState("idle"); }
+}
+async function respond(text){
+  $("thread").append(h("div",{class:"msg me"}, text)); scrollEndOf($("thread"));
+  setState("thinking"); $("talkStatus").textContent = "";
+  try{
+    const r = await gemini({system:talkSystem(), history:turns.slice(-16), user:text});
+    const reply = str(r?.reply) || "Sorry, could you say that again?";
+    turns.push({role:"user", text}, {role:"model", text:reply});
+    $("thread").append(fixBlock(r?.corrections, r?.better), tutorMsg(reply)); scrollEndOf($("thread"));
+    logActivity(); logMistakes(r?.corrections); saveP();
+    if (!active){ setState("idle"); return; }
+    setState("speaking");
+    await speak(reply);
+    if (active && state === "speaking" && $("handsFree").checked) listen(); else { active = false; setState("idle"); }
+  }catch(e){
+    active = false; $("talkStatus").className = "status"; $("talkStatus").textContent = errCopy(e); setState("idle");
+  }
+}
+function stopAll(){ active = false; try{ rec?.abort(); }catch{} rec = null; if (canSpeak) speechSynthesis.cancel(); setState("idle"); }
+$("mic").onclick = () => {
+  if (needKey()) return;
+  if (state === "listening"){ try{ rec?.stop(); }catch{} return; }
+  if (state === "speaking"){ if (canSpeak) speechSynthesis.cancel(); active = true; listen(); return; }
+  if (state === "thinking") return;
+  active = true;
+  if (turns.length === 1 && !greeted){ greeted = true; setState("speaking"); speak(mode.open).then(() => { if (active) listen(); }); return; }
+  listen();
+};
+$("sendTyped").onclick = () => { const t = $("typed").value.trim(); if (!t || needKey()) return; $("typed").value = ""; active = false; respond(t); };
+$("resetTalk").onclick = () => { stopAll(); startTalk(); };
+$("evalTalk").onclick = async () => {
+  if (needKey()) return;
+  const said = turns.filter(t=>t.role==="user");
+  if (!said.length){ $("talkStatus").textContent = "Habla o escribe al menos una respuesta para poder valorarte."; return; }
+  stopAll(); $("evalTalk").disabled = true; $("talkStatus").textContent = "Preparando tu valoración…";
+  try{
+    const transcript = turns.map(t => (t.role==="model" ? "Partner: " : "Student: ")+t.text).join("\n");
+    const r = await gemini({system:talkSystem(), user:`Conversation transcript:\n${transcript}\n\nEvaluate the student's spoken English${mode.id==="interview" ? " and interview performance" : ""}. Write in Spanish from Spain using "tú".
+Reply with only JSON: {"level": "A2"|"B1"|"B2"|"C1", "verdict": string (2 sentences), "strengths": [string] (max 3), "improve": [string] (max 3, concrete), "phrases": [string] (3 useful English phrases for this kind of conversation)}`});
+    $("thread").append(resultCard(mode.id==="interview" ? "Valoración de la entrevista" : "Valoración de la conversación", r)); scrollEndOf($("thread"));
+    $("talkStatus").textContent = "";
+  }catch(e){ $("talkStatus").textContent = errCopy(e); }
+  finally{ $("evalTalk").disabled = false; }
+};
+document.addEventListener("visibilitychange", () => { if (document.hidden){ stopAll(); stopDictation(); } });
+
+/* ================= Examen Aptis ================= */
+const PARTS = [
+  {id:"S1", skill:"Speaking", name:"Parte 1 · Sobre ti", short:"3 preguntas personales", prep:0, time:90,
+   how:"Responde a 3 preguntas sencillas sobre ti. En el examen tienes 30 segundos por pregunta. Pulsa el micro y habla.",
+   gen:"Aptis Speaking Part 1: 3 short personal questions (e.g. hobbies, home town, daily routine), numbered."},
+  {id:"S2", skill:"Speaking", name:"Parte 2 · Describe", short:"Una escena y tu opinión", prep:0, time:135,
+   how:"Describe la escena como si vieras la foto y responde. En el examen tienes 45 segundos por pregunta.",
+   gen:"Aptis Speaking Part 2: one sentence describing a photo-like scene (start with 'Imagine a photo of...'), then 3 numbered questions: 1) Describe the picture, 2) a related personal-experience question, 3) an opinion question."},
+  {id:"S3", skill:"Speaking", name:"Parte 3 · Compara", short:"Dos escenas", prep:0, time:135,
+   how:"Compara las dos escenas y responde. En el examen tienes 45 segundos por pregunta.",
+   gen:"Aptis Speaking Part 3: two contrasting photo-like scenes in one sentence each ('Picture A shows... Picture B shows...'), then 3 numbered questions: 1) Tell me what you see in the two pictures, 2) a 'which would you prefer and why' question, 3) a broader opinion question."},
+  {id:"S4", skill:"Speaking", name:"Parte 4 · Turno largo", short:"1 min preparar, 2 min hablar", prep:60, time:120,
+   how:"Tienes 1 minuto para preparar y 2 minutos para responder a las 3 preguntas seguidas.",
+   gen:"Aptis Speaking Part 4: 3 connected numbered questions about one topic, from personal experience to abstract opinion."},
+  {id:"W1", skill:"Writing", name:"Parte 1 · Respuestas cortas", short:"5 preguntas, 1–5 palabras", prep:0, time:180,
+   how:"Te unes a un club y respondes a 5 preguntas con 1 a 5 palabras cada una.",
+   gen:"Aptis Writing Part 1: one sentence saying the candidate is joining a club (choose a type), then 5 numbered very simple questions to answer in 1-5 words."},
+  {id:"W2", skill:"Writing", name:"Parte 2 · Formulario", short:"20–30 palabras", prep:0, time:420,
+   how:"Rellenas un formulario del club con frases completas, entre 20 y 30 palabras.",
+   gen:"Aptis Writing Part 2: one sentence of context (joining a club), then one question asking the candidate to write in full sentences about something related (20-30 words)."},
+  {id:"W3", skill:"Writing", name:"Parte 3 · Chat", short:"3 respuestas de 30–40", prep:0, time:600,
+   how:"Respondes a 3 mensajes de miembros del club. Entre 30 y 40 palabras cada respuesta.",
+   gen:"Aptis Writing Part 3: same club context in one sentence, then 3 numbered messages from club members (with first names) asking the candidate questions. Each answer 30-40 words."},
+  {id:"W4", skill:"Writing", name:"Parte 4 · Dos emails", short:"Informal 50 + formal 120–150", prep:0, time:1800,
+   how:"Lee el aviso y escribe dos emails: uno informal a un amigo (unas 50 palabras) y uno formal (120–150 palabras).",
+   gen:"Aptis Writing Part 4: a short notice (3-4 sentences) from a club announcing a change that affects members. Then: Task 1 'Write an email to your friend about this (about 50 words)'. Task 2 'Write an email to the manager of the club (120-150 words)'."},
+];
+let part = null, task = "", tId = null;
+function renderParts(){
+  for (const [boxId, skill] of [["partsS","Speaking"],["partsW","Writing"]]){
+    const box = $(boxId); box.replaceChildren();
+    for (const p of PARTS.filter(x=>x.skill===skill))
+      box.append(h("button",{class:"part",type:"button","aria-pressed":String(p===part),onclick:()=>{part=p;renderParts();newTask();}}, h("b",{},p.name), h("span",{},p.short)));
+  }
+}
+const fmt = s => { const a = Math.abs(s); return (s<0?"-":"")+Math.floor(a/60)+":"+String(a%60).padStart(2,"0"); };
+function stopTimer(){ clearInterval(tId); tId = null; }
+function setTimer(sec, lbl, over){ $("examTimer").firstChild.nodeValue = fmt(sec); $("examTimerLbl").textContent = lbl; $("examTimer").classList.toggle("over", !!over); }
+function startTimer(){
+  stopTimer();
+  let phase = part.prep ? "prep" : "go", left = part.prep || part.time;
+  setTimer(left, phase==="prep" ? "Preparación" : "Tiempo de respuesta");
+  $("examTimerBtn").textContent = "Reiniciar cronómetro";
+  tId = setInterval(() => {
+    left--;
+    if (phase==="prep" && left<=0){ phase="go"; left=part.time; }
+    setTimer(left, phase==="prep" ? "Preparación" : (left<0 ? "Tiempo agotado" : "Tiempo de respuesta"), left<0);
+  }, 1000);
+}
+async function newTask(){
+  stopTimer(); stopDictation();
+  if (needKey()) return;
+  const st = $("examStatus"); $("examResult").replaceChildren();
+  $("examTask").hidden = false;
+  $("examTag").textContent = part.skill+" · Aptis"; $("examTitle").textContent = part.name; $("examHow").textContent = part.how;
+  $("examPrompt").textContent = "Generando tarea…"; $("examInput").value = ""; countWords();
+  setTimer(part.prep||part.time, "Pulsa empezar"); $("examTimerBtn").textContent = "Empezar cronómetro";
+  const speaking = part.skill === "Speaking";
+  $("examMic").hidden = !(speaking && SR);
+  $("examInput").placeholder = speaking ? (SR ? "Pulsa el micro y habla. Tu respuesta aparece aquí." : "Dicta con el micro del teclado…") : "Write your answer…";
+  st.textContent = "";
+  try{
+    const r = await gemini({temperature:1, maxTokens:700, user:`Create one realistic practice task for the British Council Aptis General test. ${part.gen}
+Pick a fresh everyday topic. Seed: ${Math.random().toString(36).slice(2,7)}.
+Write the task in English exactly as the candidate would see it. Reply with only JSON: {"task": string}`});
+    task = str(r?.task);
+    $("examPrompt").textContent = task || "No se ha podido crear la tarea. Pulsa «Otra tarea».";
+    $("examTask").scrollIntoView({block:"start"});
+  }catch(e){ $("examPrompt").textContent = ""; st.textContent = errCopy(e); }
+}
+function countWords(){ const n = ($("examInput").value.trim().match(/\S+/g)||[]).length; $("examWords").textContent = n+" palabras"; }
+let drec = null, dictating = false;
+function stopDictation(){ dictating = false; try{ drec?.stop(); }catch{} drec = null; $("examMic").classList.remove("listening"); }
+function dictate(){
+  drec = new SR(); drec.lang = "en-GB"; drec.interimResults = false; drec.continuous = false;
+  drec.onresult = e => {
+    const t = Array.from(e.results).filter(r=>r.isFinal).map(r=>r[0].transcript).join(" ").trim();
+    if (t){ const box = $("examInput"); box.value = (box.value.trim()+" "+t).trim(); countWords(); }
+  };
+  drec.onerror = e => { if (e.error === "not-allowed" || e.error === "service-not-allowed"){ stopDictation(); $("examStatus").textContent = "Permite el micrófono para esta página."; } };
+  drec.onend = () => { drec = null; if (dictating) dictate(); };
+  try{ drec.start(); }catch{ stopDictation(); }
+}
+$("examMic").onclick = () => {
+  if (dictating){ stopDictation(); return; }
+  dictating = true; $("examMic").classList.add("listening");
+  if (!tId) startTimer();
+  dictate();
+};
+async function evalTask(){
+  const ans = $("examInput").value.trim(), st = $("examStatus");
+  if (!ans || !task){ st.textContent = "Responde primero, hablando o escribiendo."; return; }
+  if (needKey()) return;
+  stopTimer(); stopDictation();
+  $("examEval").disabled = true; st.textContent = "Corrigiendo como un examinador de Aptis…";
+  try{
+    const r = await gemini({maxTokens:2000, user:`You are an experienced British Council Aptis examiner. Assess this ${part.skill} answer (${part.name}) with Aptis criteria: task fulfilment and relevance, grammatical range and accuracy, vocabulary range and accuracy, coherence and cohesion${part.skill==="Speaking" ? ", and fluency as far as a transcript shows. The answer comes from speech recognition, so ignore punctuation and capitals" : ""}. Be honest and specific.
+TASK:
+${task}
+
+CANDIDATE ANSWER:
+${ans}
+
+Write feedback in Spanish from Spain using "tú". Reply with only JSON: {"level": "A2"|"B1"|"B2"|"C1", "verdict": string (2 sentences: the level shown and the single biggest thing holding it back), "strengths": [string] (max 3), "improve": [string] (max 3, concrete), "corrections": [{"wrong": string, "right": string, "why": string (max 15 words)}] (max 5), "model": string (a B2-C1 model answer in English, within the task's length limits)}`});
+    const out = $("examResult"); out.replaceChildren(resultCard(part.name, r), fixBlock(r?.corrections, ""));
+    if (str(r?.model)) out.append(h("div",{class:"card"}, h("span",{class:"label"},"Respuesta modelo"), h("div",{class:"task"},str(r.model)), h("div",{class:"btnrow"}, sayBtn(str(r.model)))));
+    logActivity(); logMistakes(r?.corrections); saveP();
+    st.textContent = ""; out.firstChild?.scrollIntoView({block:"start"});
+  }catch(e){ st.textContent = errCopy(e); }
+  finally{ $("examEval").disabled = false; }
+}
+$("examTimerBtn").onclick = startTimer;
+$("examEval").onclick = evalTask;
+$("examNew").onclick = newTask;
+$("examSay").onclick = () => task && speak(task);
+if (!canSpeak) $("examSay").hidden = true;
+$("examInput").addEventListener("input", countWords);
+
+/* ================= Pestañas ================= */
+function showTab(name){
+  for (const b of document.querySelectorAll("nav button")) b.setAttribute("aria-selected", String(b.dataset.tab===name));
+  for (const s of document.querySelectorAll("section.tab")) s.hidden = s.id !== "tab-"+name;
+  $("dock").hidden = name !== "talk";
+  if (name !== "talk") stopAll();
+  if (name !== "exam") stopDictation();
+  ls.set("tab", name); window.scrollTo(0,0);
+}
+for (const b of document.querySelectorAll("nav button")) b.onclick = () => showTab(b.dataset.tab);
+
+renderModes(); startTalk(); renderParts(); renderProgress();
+showTab(["talk","exam","prog","plan"].includes(ls.get("tab","talk")) ? ls.get("tab","talk") : "talk");
+})();
+</script>
+</body>
+</html>

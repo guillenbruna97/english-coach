@@ -1,0 +1,10 @@
+{
+  "name": "English Coach",
+  "short_name": "English Coach",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F2F4F8",
+  "theme_color": "#13203B",
+  "lang": "es",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
